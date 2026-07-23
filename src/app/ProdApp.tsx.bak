@@ -1,0 +1,1217 @@
+import { useState, useRef, useEffect } from "react";
+import {
+  LayoutDashboard, Package, ClipboardList, BarChart3,
+  ChevronDown, ChevronRight, Search, LogOut, User, Lock,
+  Bell, Menu, Eye, Pencil, QrCode, Plus, Users,
+  CheckCircle, XCircle, RotateCcw, AlertCircle, Clock,
+  Download, Save, RefreshCw, FileText, ShieldCheck,
+  Activity, BookOpen, Box, X,
+} from "lucide-react";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+} from "recharts";
+import { StatusBadge, KPICard, SectionHeader } from "./shared";
+import "driver.js/dist/driver.css";
+import { driver } from "driver.js";
+
+// ─── Production Data ─────────────────────────────────────────────────────────
+
+const prodBundles = [
+  { id: "BND-20260722-0012", design: "Alexa Long Sleeve Top", qty: 24, size: "M", color: "Black", seamstress: "Maria Santos", status: "Pending QC", updated: "1:05 PM", batch: "B-07" },
+  { id: "BND-20260722-0011", design: "Martina Scoop Neck Top", qty: 30, size: "S", color: "Ivory", seamstress: "Liza Cruz", status: "Pending QC", updated: "12:45 PM", batch: "B-06" },
+  { id: "BND-20260722-0010", design: "Arya Tank Top", qty: 20, size: "M", color: "Dusty Pink", seamstress: "Rosa Mendez", status: "Approved", updated: "11:30 AM", batch: "B-05" },
+  { id: "BND-20260722-0009", design: "Lounge Pants Plain", qty: 15, size: "L", color: "Charcoal", seamstress: "Cita Bautista", status: "In Progress", updated: "10:15 AM", batch: "B-04" },
+  { id: "BND-20260722-0008", design: "Klea Mini Dress", qty: 18, size: "S", color: "Black", seamstress: "Ana Torres", status: "Back Job", updated: "9:50 AM", batch: "B-03" },
+  { id: "BND-20260722-0007", design: "Lounge Pants Ribbed", qty: 20, size: "M", color: "Oat", seamstress: "Maria Santos", status: "In Progress", updated: "9:30 AM", batch: "B-02" },
+  { id: "BND-20260722-0006", design: "Trouser Pants Straight", qty: 12, size: "S", color: "Black", seamstress: "Liza Cruz", status: "Approved", updated: "Yesterday 4:00 PM", batch: "B-01" },
+  { id: "BND-20260722-0005", design: "Biker Shorts", qty: 22, size: "M", color: "Black", seamstress: "Rosa Mendez", status: "Completed", updated: "Yesterday 3:20 PM", batch: "A-12" },
+  { id: "BND-20260722-0004", design: "Martina Scoop Neck Top", qty: 28, size: "L", color: "White", seamstress: "Cita Bautista", status: "Rejected", updated: "Yesterday 2:10 PM", batch: "A-11" },
+  { id: "BND-20260722-0003", design: "Arya Tank Top", qty: 50, size: "XL", color: "Black", seamstress: "Ana Torres", status: "Completed", updated: "Yesterday 1:45 PM", batch: "A-10" },
+];
+
+const prodSeamstresses = [
+  { name: "Maria Santos", active: 3, completedToday: 5, status: "Active" },
+  { name: "Liza Cruz", active: 2, completedToday: 4, status: "Active" },
+  { name: "Rosa Mendez", active: 1, completedToday: 3, status: "Active" },
+  { name: "Cita Bautista", active: 2, completedToday: 2, status: "Active" },
+  { name: "Ana Torres", active: 1, completedToday: 1, status: "On Break" },
+  { name: "Joy Reyes", active: 0, completedToday: 0, status: "Absent" },
+];
+
+const prodTimeline = [
+  { time: "8:30 AM", activity: "Bundle Created", by: "prod_head" },
+  { time: "8:45 AM", activity: "Assigned to Maria Santos", by: "prod_head" },
+  { time: "12:15 PM", activity: "Sewing Completed", by: "m.santos" },
+  { time: "1:05 PM", activity: "QC Inspection Started", by: "prod_head" },
+  { time: "1:20 PM", activity: "Approved — passed all checklist items", by: "prod_head" },
+];
+
+const prodPendingQC = [
+  { id: "BND-20260722-0012", design: "Alexa Long Sleeve Top", seamstress: "Maria Santos", completedAt: "1:05 PM", waiting: "15 min" },
+  { id: "BND-20260722-0011", design: "Martina Scoop Neck Top", seamstress: "Liza Cruz", completedAt: "12:45 PM", waiting: "35 min" },
+  { id: "BND-20260722-0009b", design: "Lounge Pants Plain", seamstress: "Rosa Mendez", completedAt: "11:50 AM", waiting: "1h 30m" },
+  { id: "BND-20260722-0007b", design: "Lounge Pants Ribbed", seamstress: "Cita Bautista", completedAt: "11:20 AM", waiting: "2h 0m" },
+];
+
+const prodBackJobs = [
+  { id: "BND-20260722-0008", reason: "Coverstitch break on hem — Klea Mini Dress", seamstress: "Ana Torres", status: "In Rework", due: "Jul 23, 2026" },
+  { id: "BND-20260722-0004", reason: "Incorrect seam allowance — neckline drop off", seamstress: "Cita Bautista", status: "Pending Rework", due: "Jul 23, 2026" },
+  { id: "BND-20260721-0015", reason: "Overlock thread tension uneven — back panel", seamstress: "Joy Reyes", status: "Re-Inspected", due: "Jul 22, 2026" },
+];
+
+const prodNotifications = [
+  { type: "warn", msg: "Bundle BND-0011 (Martina Scoop Neck Top) waiting for QC — 35 min", time: "12:45 PM" },
+  { type: "warn", msg: "Back job BND-0008 (Klea Mini Dress) due today — rework not yet started", time: "10:00 AM" },
+  { type: "ok", msg: "Bundle BND-0010 approved — Arya Tank Top, 20 pcs (Dusty Pink)", time: "11:30 AM" },
+  { type: "info", msg: "Seamstress Joy Reyes marked Absent for today", time: "8:05 AM" },
+];
+
+const prodInspections = [
+  { id: "BND-20260722-0010", design: "Arya Tank Top", result: "Approved", inspector: "prod_head", time: "11:30 AM" },
+  { id: "BND-20260722-0006", design: "Trouser Pants Straight", result: "Approved", inspector: "prod_head", time: "Yesterday 4:00 PM" },
+  { id: "BND-20260722-0004", design: "Martina Scoop Neck Top", result: "Rejected", inspector: "prod_head", time: "Yesterday 2:10 PM" },
+  { id: "BND-20260721-0015", design: "Klea Mini Dress", result: "Back Job", inspector: "prod_head", time: "Yesterday 1:00 PM" },
+];
+
+const prodReportData = [
+  { month: "Feb", created: 38, completed: 34, approved: 30, backjobs: 4 },
+  { month: "Mar", created: 44, completed: 40, approved: 36, backjobs: 4 },
+  { month: "Apr", created: 52, completed: 48, approved: 44, backjobs: 4 },
+  { month: "May", created: 49, completed: 45, approved: 41, backjobs: 4 },
+  { month: "Jun", created: 61, completed: 57, approved: 52, backjobs: 5 },
+  { month: "Jul", created: 78, completed: 55, approved: 41, backjobs: 4 },
+];
+
+const prodQualityData = [
+  { design: "Alexa Long Sleeve Top", inspected: 24, approved: 21, rejected: 1, backjob: 2 },
+  { design: "Martina Scoop Neck Top", inspected: 18, approved: 15, rejected: 2, backjob: 1 },
+  { design: "Arya Tank Top", inspected: 20, approved: 19, rejected: 1, backjob: 0 },
+  { design: "Klea Mini Dress", inspected: 18, approved: 14, rejected: 2, backjob: 2 },
+  { design: "Lounge Pants Ribbed", inspected: 15, approved: 14, rejected: 0, backjob: 1 },
+];
+
+// ─── Production App ───────────────────────────────────────────────────────────
+
+export default function ProdApp({ onLogout }: { onLogout: () => void }) {
+  const [prodPage, setProdPage] = useState("prod-overview");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onClick(e: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) setProfileOpen(false);
+    }
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
+
+  useEffect(() => {
+    if (!localStorage.getItem("mera_prod_tour_seen")) {
+      const timer = setTimeout(startProdTour, 500);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (prodPage === "prod-overview" && localStorage.getItem("mera_prod_tour_seen")) {
+      const timer = setTimeout(startProdTour, 400);
+      return () => clearTimeout(timer);
+    }
+    if (prodPage === "prod-bundles" && !localStorage.getItem("mera_prod_bundles_tour_seen")) {
+      const timer = setTimeout(startBundlesTour, 400);
+      return () => clearTimeout(timer);
+    }
+    if (prodPage === "prod-qc" && !localStorage.getItem("mera_prod_qc_tour_seen")) {
+      const timer = setTimeout(startQCTour, 400);
+      return () => clearTimeout(timer);
+    }
+    if (prodPage === "prod-reports" && !localStorage.getItem("mera_prod_reports_tour_seen")) {
+      const timer = setTimeout(startReportsTour, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [prodPage]);
+
+  function startProdTour() {
+    setProdPage("prod-overview");
+    setTimeout(() => {
+      const steps = [
+        {
+          element: "#prod-kpi-section",
+          popover: {
+            title: "Production Overview",
+            description: "At-a-glance KPIs — total bundles, in progress, pending QC, approved, rejected, back jobs, and completed today.",
+            side: "bottom" as const,
+          },
+        },
+        {
+          element: "#prod-quick-actions",
+          popover: {
+            title: "Quick Actions",
+            description: "Jump to create bundles, scan QR codes, assign seamstresses, view pending QC, or print bundle labels.",
+            side: "bottom" as const,
+          },
+        },
+        {
+          element: "#prod-bundle-table",
+          popover: {
+            title: "Bundle Management",
+            description: "Track all bundles with photo preview, status badges, and actions. Click View All for the full list. Use the Documents column to download bundle files.",
+            side: "top" as const,
+          },
+        },
+        {
+          element: "#prod-pending-back",
+          popover: {
+            title: "Pending QC & Back Job Queue",
+            description: "Monitor bundles waiting for QC inspection and those sent back for rework. Click a row to jump to inspection.",
+            side: "left" as const,
+          },
+        },
+        {
+          element: "#prod-timeline-inspections",
+          popover: {
+            title: "Timeline & Recent Inspections",
+            description: "View production timeline events for a bundle and see recent QC inspection results at a glance.",
+            side: "right" as const,
+          },
+        },
+      ];
+      const driverObj = driver({
+        showProgress: true,
+        animate: true,
+        overlayColor: "rgba(0,0,0,0.5)",
+        popoverClass: "mera-tour-popover",
+        onDestroyed: () => localStorage.setItem("mera_prod_tour_seen", "1"),
+        steps,
+      });
+      driverObj.drive();
+    }, 300);
+  }
+
+  function startBundlesTour() {
+    setTimeout(() => {
+      const steps = [
+        {
+          element: "#prod-create-bundle-btn",
+          popover: {
+            title: "Create Bundle",
+            description: "Click to open the bundle creation form. Fill in design, quantity, size, color, and batch details.",
+            side: "left" as const,
+          },
+        },
+        {
+          element: "#prod-create-panel",
+          popover: {
+            title: "Bundle Fields",
+            description: "Each field is required — select the design, set quantity, choose size and color, then save.",
+            side: "bottom" as const,
+          },
+        },
+        {
+          element: "#prod-save-print-btn",
+          popover: {
+            title: "Save & Print QR / Save Only",
+            description: "Save & Print QR generates the bundle and prints its QR label. Save Only just saves the bundle for later.",
+            side: "top" as const,
+          },
+        },
+      ];
+      const driverObj = driver({
+        showProgress: true,
+        animate: true,
+        overlayColor: "rgba(0,0,0,0.5)",
+        popoverClass: "mera-tour-popover",
+        onDestroyed: () => localStorage.setItem("mera_prod_bundles_tour_seen", "1"),
+        steps,
+      });
+      driverObj.drive();
+    }, 300);
+  }
+
+  function startQCTour() {
+    setTimeout(() => {
+      const steps = [
+        {
+          element: "#prod-scan-qr",
+          popover: {
+            title: "Scan QR",
+            description: "Select or scan a bundle to load its details for inspection. The bundle info will appear below.",
+            side: "bottom" as const,
+          },
+        },
+        {
+          element: "#prod-checklist",
+          popover: {
+            title: "Inspection Checklist",
+            description: "Check each quality criterion — stitch quality, measurements, fabric defects, accessories, and overall appearance. Upload a photo for documentation.",
+            side: "bottom" as const,
+          },
+        },
+        {
+          element: "#prod-actions-bar",
+          popover: {
+            title: "Decision Buttons",
+            description: "Approve passes QC, Reject marks as failed, or Back Job sends the bundle for rework with notes.",
+            side: "top" as const,
+          },
+        },
+      ];
+      const driverObj = driver({
+        showProgress: true,
+        animate: true,
+        overlayColor: "rgba(0,0,0,0.5)",
+        popoverClass: "mera-tour-popover",
+        onDestroyed: () => localStorage.setItem("mera_prod_qc_tour_seen", "1"),
+        steps,
+      });
+      driverObj.drive();
+    }, 300);
+  }
+
+  function startReportsTour() {
+    setTimeout(() => {
+      const steps = [
+        {
+          element: "#prod-reports-summary",
+          popover: {
+            title: "Reports",
+            description: "View production output, quality pass rates, and seamstress productivity in one place. Switch between Production, Quality, and Productivity tabs.",
+            side: "bottom" as const,
+          },
+        },
+      ];
+      const driverObj = driver({
+        showProgress: true,
+        animate: true,
+        overlayColor: "rgba(0,0,0,0.5)",
+        popoverClass: "mera-tour-popover",
+        onDestroyed: () => localStorage.setItem("mera_prod_reports_tour_seen", "1"),
+        steps,
+      });
+      driverObj.drive();
+    }, 300);
+  }
+
+  const prodNav = [
+    { label: "Dashboard", icon: LayoutDashboard, key: "prod-overview" },
+    { label: "Bundles", icon: Package, key: "prod-bundles" },
+    { label: "QC Inspection", icon: ClipboardList, key: "prod-qc" },
+    { label: "Reports", icon: BarChart3, key: "prod-reports" },
+  ];
+
+  const pageLabel: Record<string, string> = {
+    "prod-overview": "Dashboard", "prod-bundles": "Bundles",
+    "prod-qc": "QC Inspection", "prod-reports": "Reports",
+  };
+
+  function renderProdContent() {
+    if (prodPage === "prod-overview") return <ProdOverview navigate={setProdPage} />;
+    if (prodPage === "prod-bundles") return <ProdBundles />;
+    if (prodPage === "prod-qc")      return <ProdQC />;
+    if (prodPage === "prod-reports") return <ProdReports />;
+    return <ProdOverview navigate={setProdPage} />;
+  }
+
+  return (
+    <div className="flex h-screen w-screen overflow-hidden bg-background" style={{ fontFamily: "var(--font-display)" }}>
+      <style>{`
+        .mera-tour-popover {
+          --driver-popover-bg: var(--card, #1a1a1a) !important;
+          --driver-popover-border-color: var(--border, #2a2a2a) !important;
+          --driver-popover-color: var(--foreground, #f5f5f5) !important;
+          --driver-popover-title-color: var(--foreground, #f5f5f5) !important;
+          --driver-popover-font-family: var(--font-display, Inter, system-ui) !important;
+        }
+        .mera-tour-popover .driver-popover-description {
+          color: var(--muted-foreground, #a3a3a3) !important;
+        }
+        .mera-tour-popover .driver-popover-footer button {
+          background: var(--foreground, #0a0a0a) !important;
+          color: var(--background, #f5f5f5) !important;
+          border: none !important;
+          border-radius: 6px !important;
+          font-size: 11px !important;
+          font-weight: 500 !important;
+        }
+        .mera-tour-popover .driver-popover-footer button.driver-popover-prev-btn {
+          background: transparent !important;
+          color: var(--foreground, #f5f5f5) !important;
+        }
+      `}</style>
+
+      {/* Sidebar */}
+      <aside className={`flex flex-col shrink-0 border-r border-border transition-all duration-200 ${sidebarOpen ? "w-56" : "w-14"}`} style={{ background: "var(--sidebar)" }}>
+        <div className="flex items-center gap-2.5 px-4 py-4 border-b border-[var(--sidebar-border)]">
+          <div className="w-7 h-7 rounded-md bg-foreground flex items-center justify-center shrink-0">
+            <span className="text-[10px] font-bold text-background font-mono">TC</span>
+          </div>
+          {sidebarOpen && (
+            <div className="overflow-hidden">
+              <div className="text-[11px] font-bold text-foreground tracking-widest uppercase whitespace-nowrap">TILAO CORP</div>
+              <div className="text-[9px] text-muted-foreground font-mono whitespace-nowrap">Production Portal</div>
+            </div>
+          )}
+        </div>
+        <nav className="flex-1 overflow-y-auto py-3 space-y-0.5 px-2 scrollbar-none">
+          {prodNav.map(item => {
+            const Icon = item.icon;
+            const isActive = prodPage === item.key;
+            return (
+              <button key={item.key} onClick={() => setProdPage(item.key)}
+                className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded text-[11px] font-medium transition-colors ${isActive ? "text-foreground bg-[var(--sidebar-accent)]" : "text-[var(--sidebar-foreground)] hover:text-foreground hover:bg-[var(--sidebar-accent)]"}`}>
+                <Icon size={14} className="shrink-0" />
+                {sidebarOpen && <span className="flex-1 text-left">{item.label}</span>}
+              </button>
+            );
+          })}
+        </nav>
+        {sidebarOpen && (
+          <div className="px-4 py-3 border-t border-[var(--sidebar-border)]">
+            <div className="text-[10px] text-muted-foreground font-mono">v2.4.1 · Production Build</div>
+          </div>
+        )}
+      </aside>
+
+      {/* Main */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+
+        {/* Header */}
+        <header className="h-12 flex items-center gap-3 px-4 border-b border-border bg-card shrink-0">
+          <button onClick={() => setSidebarOpen(v => !v)} className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+            <Menu size={15} />
+          </button>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="text-foreground font-medium">Production</span>
+            <ChevronRight size={11} />
+            <span className="text-foreground font-medium">{pageLabel[prodPage] ?? prodPage}</span>
+          </div>
+          <div className="relative ml-auto w-48">
+            <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input placeholder="Search bundle…" className="w-full bg-muted border border-border rounded-full pl-8 pr-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-foreground/30 transition-colors" />
+          </div>
+          {/* QR Scan button */}
+          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-muted border border-border text-xs text-muted-foreground hover:text-foreground transition-colors">
+            <QrCode size={13} /> Scan QR
+          </button>
+          {/* Tour */}
+          <button onClick={startProdTour} className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Start Tour">
+            <BookOpen size={15} />
+          </button>
+          {/* Notifications */}
+          <div className="relative" ref={notifRef}>
+            <button onClick={() => setNotifOpen(v => !v)} className="relative p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+              <Bell size={15} />
+              <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center">2</span>
+            </button>
+            {notifOpen && (
+              <div className="absolute right-0 top-full mt-2 w-72 bg-popover border border-border rounded-lg shadow-2xl z-50 overflow-hidden">
+                <div className="px-4 py-3 border-b border-border">
+                  <span className="text-xs font-semibold text-foreground">Notifications</span>
+                </div>
+                <div className="divide-y divide-border/50">
+                  {prodNotifications.map((n, i) => {
+                    const color = n.type === "warn" ? "text-amber-500" : n.type === "ok" ? "text-emerald-500" : "text-blue-500";
+                    return (
+                      <div key={i} className="flex items-start gap-3 px-4 py-3 hover:bg-black/[0.02] cursor-pointer">
+                        <AlertCircle size={12} className={`${color} mt-0.5 shrink-0`} />
+                        <div>
+                          <p className="text-[11px] text-foreground leading-snug">{n.msg}</p>
+                          <span className="text-[10px] text-muted-foreground font-mono">{n.time}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+          {/* Profile */}
+          <div className="relative" ref={profileRef}>
+            <button onClick={() => setProfileOpen(v => !v)} className="flex items-center gap-2 p-1.5 rounded hover:bg-muted transition-colors">
+              <div className="w-6 h-6 rounded-full bg-foreground flex items-center justify-center">
+                <span className="text-[10px] font-bold text-background">JD</span>
+              </div>
+              <div className="hidden sm:block text-left">
+                <div className="text-[11px] font-medium text-foreground leading-none">Juan dela Cruz</div>
+                <div className="text-[9px] text-muted-foreground font-mono leading-none mt-0.5">Production Head</div>
+              </div>
+              <ChevronDown size={11} className="text-muted-foreground" />
+            </button>
+            {profileOpen && (
+              <div className="absolute right-0 top-full mt-2 w-44 bg-popover border border-border rounded-lg shadow-2xl z-50 overflow-hidden">
+                {[{ label: "My Profile", icon: User }, { label: "Change Password", icon: Lock }].map(({ label, icon: Icon }) => (
+                  <button key={label} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-black/[0.04] transition-colors">
+                    <Icon size={12} /> {label}
+                  </button>
+                ))}
+                <div className="border-t border-border" />
+                <button onClick={onLogout} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors">
+                  <LogOut size={12} /> Logout
+                </button>
+              </div>
+            )}
+          </div>
+        </header>
+
+        {/* Content */}
+        <main className="flex-1 overflow-y-auto p-5 scrollbar-none">
+          {renderProdContent()}
+        </main>
+
+        {/* Footer */}
+        <footer className="h-8 flex items-center justify-between px-5 border-t border-border bg-card shrink-0">
+          <div className="flex items-center gap-4 text-[10px] text-muted-foreground font-mono">
+            <span>v2.4.1</span>
+            <span className="text-border">|</span>
+            <span>Production Portal · Juan dela Cruz</span>
+          </div>
+          <span className="text-[10px] text-muted-foreground font-mono">© 2026 TILAO CORP</span>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+// ─── Production Page Views ────────────────────────────────────────────────────
+
+function ProdOverview({ navigate }: { navigate: (page: string) => void }) {
+  return (
+    <div className="space-y-6">
+      {/* KPIs */}
+      <div id="prod-kpi-section">
+        <SectionHeader title="Production Overview — Jul 22, 2026" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+          <KPICard label="Total Bundles" value={78} sub="All time" icon={Package} accent="bg-muted text-muted-foreground" />
+          <KPICard label="In Progress" value={19} sub="Being sewn" icon={Activity} accent="bg-muted text-muted-foreground" />
+          <KPICard label="Pending QC" value={8} sub="Awaiting inspect" icon={Clock} accent="bg-muted text-muted-foreground" />
+          <KPICard label="Approved" value={41} sub="Passed QC" icon={CheckCircle} accent="bg-muted text-muted-foreground" trend="up" />
+          <KPICard label="Rejected" value={3} sub="Failed QC" icon={XCircle} accent="bg-muted text-muted-foreground" />
+          <KPICard label="Back Jobs" value={4} sub="For rework" icon={RotateCcw} accent="bg-muted text-muted-foreground" />
+          <KPICard label="Completed Today" value={12} sub="Jul 22" icon={CheckCircle} accent="bg-muted text-muted-foreground" trend="up" />
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div id="prod-quick-actions">
+        <SectionHeader title="Quick Actions" />
+        <div className="flex flex-wrap gap-2">
+          {[
+            { label: "Create Bundle", icon: Plus, primary: true, page: "prod-bundles" },
+            { label: "Scan QR Code", icon: QrCode, primary: false, page: "prod-qc" },
+            { label: "Assign Seamstress", icon: Users, primary: false, page: "prod-bundles" },
+            { label: "View Pending QC", icon: ClipboardList, primary: false, page: "prod-qc" },
+            { label: "Print Bundle Label", icon: FileText, primary: false, page: "" },
+          ].map(({ label, icon: Icon, primary, page }) => (
+            <button key={label} onClick={() => page && navigate(page)}
+              className={`flex items-center gap-2 px-3 py-2 rounded text-xs font-medium transition-colors ${primary ? "bg-foreground text-background hover:opacity-90" : "bg-muted border border-border text-muted-foreground hover:text-foreground hover:border-foreground/20"}`}>
+              <Icon size={13} /> {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Bundle table */}
+      <div id="prod-bundle-table">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-foreground uppercase tracking-widest">Bundle Management</h2>
+          <button onClick={() => navigate("prod-bundles")} className="text-[11px] text-muted-foreground hover:text-foreground hover:underline font-medium transition-all duration-200 group">
+            View All <span className="inline-block transition-transform duration-200 group-hover:translate-x-0.5">→</span>
+          </button>
+        </div>
+        <div className="bg-black border border-black/80 rounded-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-white/10 bg-black/80">
+                  {["Bundle No.", "Photo", "Design", "Qty", "Size", "Seamstress", "Status", "Updated", "Actions", "Documents"].map(h => (
+                    <th key={h} className="text-left px-4 py-2.5 text-white/70 font-medium uppercase tracking-wider text-[10px]">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/10">
+                {prodBundles.slice(0, 6).map(b => (
+                  <tr key={b.id} className="hover:bg-white/5 transition-colors group">
+                    <td className="px-4 py-2.5 font-mono text-white font-medium text-[10px]">{b.id.replace("BND-20260722-", "BND-0")}</td>
+                    <td className="px-4 py-2.5">
+                      <div className="w-7 h-7 rounded bg-white/10 flex items-center justify-center">
+                        <Box size={14} className="text-white/50" />
+                      </div>
+                    </td>
+                    <td className="px-4 py-2.5 text-white">{b.design}</td>
+                    <td className="px-4 py-2.5 text-white/60 font-mono">{b.qty}</td>
+                    <td className="px-4 py-2.5 text-white/60">{b.size}</td>
+                    <td className="px-4 py-2.5 text-white">{b.seamstress}</td>
+                    <td className="px-4 py-2.5"><StatusBadge status={b.status} /></td>
+                    <td className="px-4 py-2.5 text-white/60 font-mono text-[10px]">{b.updated}</td>
+                    <td className="px-4 py-2.5">
+                      <div className="flex gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                        <button className="p-1 text-white/60 hover:text-white" title="View"><Eye size={12} /></button>
+                        <button className="p-1 text-white/60 hover:text-white" title="Edit"><Pencil size={12} /></button>
+                        <button className="p-1 text-white/60 hover:text-white" title="Print QR"><QrCode size={12} /></button>
+                      </div>
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <button className="p-1 text-white/40 hover:text-white opacity-50 hover:opacity-100 transition-all duration-200" title="Download Documents">
+                        <Download size={12} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Two-col: Pending QC | Back Jobs */}
+      <div id="prod-pending-back" className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-card border border-border rounded-lg overflow-hidden">
+          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Pending QC Queue</span>
+            <span className="text-[10px] font-mono text-amber-500 font-medium">{prodPendingQC.length} waiting</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  {["Bundle", "Design", "Seamstress", "Completed", "Waiting"].map(h => (
+                    <th key={h} className="text-left px-4 py-2 text-muted-foreground font-medium text-[10px] uppercase tracking-wider">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {prodPendingQC.map(q => (
+                  <tr key={q.id} className="hover:bg-black/[0.02] transition-colors cursor-pointer" onClick={() => navigate("prod-qc")}>
+                    <td className="px-4 py-2 font-mono text-foreground text-[10px]">{q.id.replace("BND-20260722-", "BND-0")}</td>
+                    <td className="px-4 py-2 text-foreground">{q.design}</td>
+                    <td className="px-4 py-2 text-muted-foreground">{q.seamstress}</td>
+                    <td className="px-4 py-2 text-muted-foreground font-mono text-[10px]">{q.completedAt}</td>
+                    <td className="px-4 py-2 font-mono text-amber-500 font-medium">{q.waiting}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div className="bg-card border border-border rounded-lg overflow-hidden">
+          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Back Job Queue</span>
+            <span className="text-[10px] font-mono text-muted-foreground">{prodBackJobs.length} items</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  {["Bundle", "Reason", "Seamstress", "Status", "Due"].map(h => (
+                    <th key={h} className="text-left px-4 py-2 text-muted-foreground font-medium text-[10px] uppercase tracking-wider">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {prodBackJobs.map(bj => (
+                  <tr key={bj.id} className="hover:bg-black/[0.02] transition-colors">
+                    <td className="px-4 py-2 font-mono text-foreground text-[10px]">{bj.id.replace("BND-20260722-", "BND-0").replace("BND-20260721-", "BND-")}</td>
+                    <td className="px-4 py-2 text-foreground max-w-32 truncate" title={bj.reason}>{bj.reason}</td>
+                    <td className="px-4 py-2 text-muted-foreground">{bj.seamstress}</td>
+                    <td className="px-4 py-2"><StatusBadge status={bj.status} /></td>
+                    <td className="px-4 py-2 text-muted-foreground font-mono text-[10px]">{bj.due}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Two-col: Timeline | Recent Inspections */}
+      <div id="prod-timeline-inspections" className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-card border border-border rounded-lg overflow-hidden">
+          <div className="px-4 py-3 border-b border-border">
+            <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Production Timeline</span>
+            <span className="text-[10px] text-muted-foreground font-mono ml-2">BND-0012</span>
+          </div>
+          <div className="p-4 space-y-0">
+            {prodTimeline.map((t, i) => (
+              <div key={i} className="flex gap-3">
+                <div className="flex flex-col items-center">
+                  <div className="w-2 h-2 rounded-full bg-foreground mt-1 shrink-0" />
+                  {i < prodTimeline.length - 1 && <div className="w-px flex-1 bg-border mt-1" />}
+                </div>
+                <div className={`pb-3 ${i === prodTimeline.length - 1 ? "" : ""}`}>
+                  <div className="text-[10px] text-muted-foreground font-mono">{t.time}</div>
+                  <div className="text-xs text-foreground mt-0.5">{t.activity}</div>
+                  <div className="text-[10px] text-muted-foreground">by {t.by}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="bg-card border border-border rounded-lg overflow-hidden">
+          <div className="px-4 py-3 border-b border-border">
+            <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Recent Inspections</span>
+          </div>
+          <div className="divide-y divide-border/50">
+            {prodInspections.map(ins => (
+              <div key={ins.id} className="px-4 py-3 flex items-center justify-between hover:bg-black/[0.02] transition-colors">
+                <div>
+                  <div className="text-xs font-medium text-foreground">{ins.design}</div>
+                  <div className="text-[10px] text-muted-foreground font-mono mt-0.5">{ins.id.replace("BND-20260722-", "BND-0").replace("BND-20260721-", "BND-")} · {ins.time}</div>
+                </div>
+                <StatusBadge status={ins.result} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProdBundles() {
+  const [search, setSearch] = useState("");
+  const [statusF, setStatusF] = useState("All");
+  const [seamF, setSeamF] = useState("All");
+  const [sizeF, setSizeF] = useState("All");
+  const [showCreate, setShowCreate] = useState(false);
+
+  const filtered = prodBundles.filter(b =>
+    (statusF === "All" || b.status === statusF) &&
+    (seamF === "All" || b.seamstress === seamF) &&
+    (sizeF === "All" || b.size === sizeF) &&
+    (b.id.toLowerCase().includes(search.toLowerCase()) || b.design.toLowerCase().includes(search.toLowerCase()))
+  );
+
+  const inputCls = "bg-muted border border-border rounded px-3 py-2 text-xs text-foreground focus:outline-none focus:border-foreground/30 transition-colors";
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-semibold text-foreground uppercase tracking-widest">Bundle Management</h2>
+          <p className="text-[11px] text-muted-foreground mt-0.5">{prodBundles.length} total bundles</p>
+        </div>
+        <button id="prod-create-bundle-btn" onClick={() => setShowCreate(v => !v)}
+          className={`flex items-center gap-2 px-3 py-2 rounded text-xs font-medium transition-all duration-300 ${showCreate ? "bg-red-500/20 text-red-500 border border-red-500/30" : "bg-foreground text-background hover:opacity-90"}`}>
+          {showCreate ? <X size={13} /> : <Plus size={13} />} {showCreate ? "Cancel" : "Create Bundle"}
+        </button>
+      </div>
+
+      {/* Create Bundle panel */}
+      {showCreate && (
+        <div id="prod-create-panel" className="bg-card border border-border rounded-lg p-5">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-foreground mb-4">Create New Bundle</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-2xl">
+            <div>
+              <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 block">Select Design</label>
+              <select className={`w-full ${inputCls}`}>
+                {["Classic Polo", "Heritage Stripe", "Diamond Weave", "Ribbed Polo A", "Floral Emboss B"].map(d => <option key={d}>{d}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 block">Quantity</label>
+              <input type="number" placeholder="e.g. 25" className={`w-full ${inputCls}`} />
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 block">Size</label>
+              <select className={`w-full ${inputCls}`}>
+                {["S", "M", "L", "XL", "2XL"].map(s => <option key={s}>{s}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 block">Color</label>
+              <input placeholder="e.g. White" className={`w-full ${inputCls}`} />
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 block">Batch No. (optional)</label>
+              <input placeholder="e.g. B-08" className={`w-full ${inputCls}`} />
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 block">Production Date</label>
+              <input type="date" defaultValue="2026-07-22" className={`w-full ${inputCls}`} />
+            </div>
+          </div>
+          <div className="flex gap-2 mt-4">
+            <button id="prod-save-print-btn" className="flex items-center gap-1.5 bg-foreground text-background hover:opacity-90 px-4 py-2 rounded text-xs font-medium transition-opacity">
+              <QrCode size={12} /> Save & Print QR
+            </button>
+            <button id="prod-save-only-btn" className="flex items-center gap-1.5 bg-muted border border-border text-muted-foreground hover:text-foreground px-4 py-2 rounded text-xs font-medium transition-colors">
+              <Save size={12} /> Save Only
+            </button>
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-2">System will auto-generate Bundle Number and QR Code.</p>
+        </div>
+      )}
+
+      {/* Filters */}
+      <div className="flex flex-wrap gap-2">
+        <div className="relative flex-1 min-w-48">
+          <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search bundle or design…" className={`w-full pl-8 ${inputCls}`} />
+        </div>
+        <select value={statusF} onChange={e => setStatusF(e.target.value)} className={inputCls}>
+          {["All", "In Progress", "Pending QC", "Approved", "Rejected", "Back Job", "Completed"].map(o => <option key={o}>{o}</option>)}
+        </select>
+        <select value={seamF} onChange={e => setSeamF(e.target.value)} className={inputCls}>
+          {["All", ...prodSeamstresses.map(s => s.name)].map(o => <option key={o}>{o}</option>)}
+        </select>
+        <select value={sizeF} onChange={e => setSizeF(e.target.value)} className={inputCls}>
+          {["All", "S", "M", "L", "XL", "2XL"].map(o => <option key={o}>{o}</option>)}
+        </select>
+      </div>
+
+      {/* Bundle table */}
+      <div className="bg-black border border-black/80 rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-white/10 bg-black/80">
+                {["Bundle No.", "Photo", "Design", "Qty", "Size", "Color", "Seamstress", "Status", "Updated", "Actions", "Documents"].map(h => (
+                  <th key={h} className="text-left px-4 py-3 text-white/70 font-medium uppercase tracking-wider text-[10px]">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/10">
+              {filtered.map(b => (
+                <tr key={b.id} className="hover:bg-white/5 transition-colors group">
+                  <td className="px-4 py-3 font-mono text-white font-medium text-[10px]">{b.id.replace("BND-20260722-", "BND-0").replace("BND-20260721-", "BND-")}</td>
+                  <td className="px-4 py-3">
+                    <div className="w-7 h-7 rounded bg-white/10 flex items-center justify-center">
+                      <Box size={14} className="text-white/50" />
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-white">{b.design}</td>
+                  <td className="px-4 py-3 text-white/60 font-mono">{b.qty}</td>
+                  <td className="px-4 py-3 text-white/60">{b.size}</td>
+                  <td className="px-4 py-3 text-white/60">{b.color}</td>
+                  <td className="px-4 py-3 text-white">{b.seamstress}</td>
+                  <td className="px-4 py-3"><StatusBadge status={b.status} /></td>
+                  <td className="px-4 py-3 text-white/60 font-mono text-[10px]">{b.updated}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                      <button title="View" className="p-1 text-white/60 hover:text-white"><Eye size={12} /></button>
+                      <button title="Edit" className="p-1 text-white/60 hover:text-white"><Pencil size={12} /></button>
+                      <button title="Update Status" className="p-1 text-white/60 hover:text-white"><RefreshCw size={12} /></button>
+                      <button title="Print QR" className="p-1 text-white/60 hover:text-white"><QrCode size={12} /></button>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <button className="p-1 text-white/40 hover:text-white opacity-50 hover:opacity-100 transition-all duration-200" title="Download Documents">
+                      <Download size={12} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="px-4 py-3 border-t border-white/10 flex items-center justify-between">
+          <span className="text-[11px] text-white/60">Showing {filtered.length} of {prodBundles.length} bundles</span>
+        </div>
+      </div>
+
+      {/* Seamstress Assignment */}
+      <div className="bg-card border border-border rounded-lg overflow-hidden">
+        <div className="px-4 py-3 border-b border-border">
+          <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Seamstress Assignment</span>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-border">
+          {/* Seamstress table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  {["Seamstress", "Active Bundles", "Completed Today", "Status"].map(h => (
+                    <th key={h} className="text-left px-4 py-2.5 text-muted-foreground font-medium uppercase tracking-wider text-[10px]">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {prodSeamstresses.map(s => (
+                  <tr key={s.name} className="hover:bg-black/[0.02] transition-colors">
+                    <td className="px-4 py-2.5 text-foreground font-medium">{s.name}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground font-mono text-center">{s.active}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground font-mono text-center">{s.completedToday}</td>
+                    <td className="px-4 py-2.5"><StatusBadge status={s.status} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {/* Assign form */}
+          <div className="p-4 space-y-3">
+            <p className="text-xs font-medium text-foreground">Assign Bundle</p>
+            <div>
+              <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 block">Select Bundle</label>
+              <select className={`w-full ${inputCls}`}>
+                {prodBundles.filter(b => b.status === "In Progress").map(b => (
+                  <option key={b.id}>{b.id.replace("BND-20260722-", "BND-0")} — {b.design}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 block">Select Seamstress</label>
+              <select className={`w-full ${inputCls}`}>
+                {prodSeamstresses.filter(s => s.status === "Active").map(s => (
+                  <option key={s.name}>{s.name} ({s.active} active)</option>
+                ))}
+              </select>
+            </div>
+            <button className="flex items-center gap-1.5 bg-foreground text-background hover:opacity-90 px-4 py-2 rounded text-xs font-medium transition-opacity w-full justify-center">
+              <Users size={12} /> Assign
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProdQC() {
+  const [scanned, setScanned] = useState<typeof prodPendingQC[0] | null>(null);
+  const [checklist, setChecklist] = useState({ stitch: false, measurement: false, fabric: false, accessories: false, appearance: false });
+  const [remarks, setRemarks] = useState("");
+  const [result, setResult] = useState<"Approved" | "Rejected" | "Back Job" | null>(null);
+
+  function handleDecision(decision: "Approved" | "Rejected" | "Back Job") {
+    setResult(decision);
+  }
+
+  const inputCls = "bg-muted border border-border rounded px-3 py-2 text-xs text-foreground focus:outline-none focus:border-foreground/30 transition-colors";
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <h2 className="text-sm font-semibold text-foreground uppercase tracking-widest">QC Inspection</h2>
+        <p className="text-[11px] text-muted-foreground mt-0.5">Scan a QR code or select a bundle from the queue below</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Scan / Bundle Info */}
+        <div className="space-y-4">
+          <div id="prod-scan-qr" className="bg-card border border-border rounded-lg p-4">
+              <span className="text-xs font-semibold uppercase tracking-widest text-foreground">QR Scan</span>
+              <div className="flex items-center gap-2">
+                <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Simulate Scan:</label>
+                <select onChange={e => {
+                  const b = prodPendingQC.find(q => q.id === e.target.value) ?? null;
+                  setScanned(b); setResult(null);
+                  setChecklist({ stitch: false, measurement: false, fabric: false, accessories: false, appearance: false });
+                  setRemarks("");
+                }} className="bg-muted border border-border rounded px-2 py-1 text-[11px] text-foreground focus:outline-none">
+                  <option value="">-- select bundle --</option>
+                  {prodPendingQC.map(q => <option key={q.id} value={q.id}>{q.id.replace("BND-20260722-", "BND-0")}</option>)}
+                </select>
+              </div>
+            </div>
+            {scanned ? (
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  ["Bundle No.", scanned.id.replace("BND-20260722-", "BND-0")],
+                  ["Design", scanned.design],
+                  ["Seamstress", scanned.seamstress],
+                  ["Completed At", scanned.completedAt],
+                  ["Waiting", scanned.waiting],
+                  ["Current Status", "Pending QC"],
+                ].map(([k, v]) => (
+                  <div key={k}>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{k}</div>
+                    <div className="text-xs font-medium text-foreground mt-0.5">{v}</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="h-24 flex flex-col items-center justify-center gap-2 border border-dashed border-border rounded-lg">
+                <QrCode size={24} className="text-muted-foreground/40" />
+                <span className="text-[11px] text-muted-foreground">No bundle scanned yet</span>
+              </div>
+            )}
+          </div>
+
+          {/* Inspection Form */}
+          {scanned && !result && (
+            <div id="prod-checklist" className="bg-card border border-border rounded-lg p-4 space-y-4">
+              <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Inspection Checklist</span>
+              {/* Upload photo placeholder */}
+              <div className="border border-dashed border-border rounded-lg h-16 flex items-center justify-center gap-2 hover:border-foreground/30 transition-colors cursor-pointer">
+                <Plus size={14} className="text-muted-foreground" />
+                <span className="text-[11px] text-muted-foreground">Upload Inspection Photo</span>
+              </div>
+              {/* Checklist */}
+              <div className="space-y-2">
+                {[
+                  { key: "stitch", label: "Stitch Quality" },
+                  { key: "measurement", label: "Measurement" },
+                  { key: "fabric", label: "Fabric Defects" },
+                  { key: "accessories", label: "Accessories" },
+                  { key: "appearance", label: "Overall Appearance" },
+                ].map(item => (
+                  <label key={item.key} className="flex items-center gap-3 text-xs text-foreground cursor-pointer group">
+                    <input type="checkbox"
+                      checked={checklist[item.key as keyof typeof checklist]}
+                      onChange={e => setChecklist(prev => ({ ...prev, [item.key]: e.target.checked }))}
+                      className="accent-foreground w-3.5 h-3.5" />
+                    <span className={checklist[item.key as keyof typeof checklist] ? "line-through text-muted-foreground" : ""}>{item.label}</span>
+                  </label>
+                ))}
+              </div>
+              <div>
+                <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 block">Remarks</label>
+                <textarea value={remarks} onChange={e => setRemarks(e.target.value)} rows={2} placeholder="Optional inspection notes…" className={`w-full ${inputCls} resize-none`} />
+              </div>
+              {/* Decision buttons */}
+              <div id="prod-actions-bar" className="flex gap-2">
+                <button onClick={() => handleDecision("Approved")} className="flex-1 flex items-center justify-center gap-1.5 bg-foreground text-background hover:opacity-90 py-2 rounded text-xs font-medium transition-opacity">
+                  <CheckCircle size={12} /> Approve
+                </button>
+                <button onClick={() => handleDecision("Rejected")} className="flex-1 flex items-center justify-center gap-1.5 bg-muted border border-border text-muted-foreground hover:text-foreground py-2 rounded text-xs font-medium transition-colors">
+                  <XCircle size={12} /> Reject
+                </button>
+                <button onClick={() => handleDecision("Back Job")} className="flex-1 flex items-center justify-center gap-1.5 bg-muted border border-border text-muted-foreground hover:text-foreground py-2 rounded text-xs font-medium transition-colors">
+                  <RotateCcw size={12} /> Back Job
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Result card */}
+          {scanned && result && (
+            <div className="bg-card border border-border rounded-lg p-4 text-center space-y-2">
+              {result === "Approved" && <CheckCircle size={28} className="mx-auto text-emerald-500" />}
+              {result === "Rejected" && <XCircle size={28} className="mx-auto text-red-500" />}
+              {result === "Back Job" && <RotateCcw size={28} className="mx-auto text-amber-500" />}
+              <p className="text-sm font-semibold text-foreground">{result}</p>
+              <p className="text-[11px] text-muted-foreground">
+                {result === "Approved" && "Bundle passed QC. Ready for completion."}
+                {result === "Rejected" && "Bundle failed QC. Marked as rejected."}
+                {result === "Back Job" && "Bundle sent back for rework."}
+              </p>
+              {remarks && <p className="text-[11px] text-muted-foreground italic">"{remarks}"</p>}
+              <button onClick={() => { setScanned(null); setResult(null); }} className="text-[11px] text-foreground border border-border rounded px-3 py-1.5 hover:bg-muted transition-colors">
+                Inspect Another
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Pending QC + Back Jobs */}
+        <div className="space-y-4">
+          <div className="bg-card border border-border rounded-lg overflow-hidden">
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Pending QC Queue</span>
+              <span className="text-[10px] font-mono text-amber-500">{prodPendingQC.length} waiting</span>
+            </div>
+            <div className="divide-y divide-border/50">
+              {prodPendingQC.map(q => (
+                <div key={q.id}
+                  onClick={() => { setScanned(q); setResult(null); setChecklist({ stitch: false, measurement: false, fabric: false, accessories: false, appearance: false }); setRemarks(""); }}
+                  className={`px-4 py-3 cursor-pointer hover:bg-black/[0.02] transition-colors ${scanned?.id === q.id ? "bg-foreground/5 border-l-2 border-foreground" : ""}`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-medium text-foreground">{q.design}</div>
+                      <div className="text-[10px] text-muted-foreground font-mono mt-0.5">{q.id.replace("BND-20260722-", "BND-0")} · {q.seamstress}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[10px] font-mono text-amber-500 font-medium">{q.waiting}</div>
+                      <div className="text-[10px] text-muted-foreground font-mono">{q.completedAt}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-card border border-border rounded-lg overflow-hidden">
+            <div className="px-4 py-3 border-b border-border">
+              <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Back Job Management</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    {["Bundle", "Reason", "Seamstress", "Status", "Due"].map(h => (
+                      <th key={h} className="text-left px-4 py-2 text-muted-foreground font-medium text-[10px] uppercase tracking-wider">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/50">
+                  {prodBackJobs.map(bj => (
+                    <tr key={bj.id} className="hover:bg-black/[0.02] transition-colors">
+                      <td className="px-4 py-2.5 font-mono text-foreground text-[10px]">{bj.id.replace("BND-20260722-", "BND-0").replace("BND-20260721-", "BND-")}</td>
+                      <td className="px-4 py-2.5 text-foreground max-w-28 truncate" title={bj.reason}>{bj.reason}</td>
+                      <td className="px-4 py-2.5 text-muted-foreground">{bj.seamstress}</td>
+                      <td className="px-4 py-2.5"><StatusBadge status={bj.status} /></td>
+                      <td className="px-4 py-2.5 text-muted-foreground font-mono text-[10px]">{bj.due}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProdReports() {
+  const [tab, setTab] = useState("production");
+  const tabs = [
+    { key: "production", label: "Production" },
+    { key: "quality", label: "Quality" },
+    { key: "productivity", label: "Productivity" },
+  ];
+
+  return (
+    <div id="prod-reports-summary" className="space-y-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-semibold text-foreground uppercase tracking-widest">Reports</h2>
+          <p className="text-[11px] text-muted-foreground mt-0.5">Production, quality, and seamstress analytics</p>
+        </div>
+        <div className="flex gap-2">
+          <button className="flex items-center gap-1.5 bg-muted border border-border hover:border-foreground/20 text-muted-foreground hover:text-foreground px-3 py-2 rounded text-xs font-medium transition-colors">
+            <Download size={12} /> Export PDF
+          </button>
+          <button className="flex items-center gap-1.5 bg-muted border border-border hover:border-foreground/20 text-muted-foreground hover:text-foreground px-3 py-2 rounded text-xs font-medium transition-colors">
+            <Download size={12} /> Export Excel
+          </button>
+        </div>
+      </div>
+
+      <div className="flex gap-1 border-b border-border">
+        {tabs.map(t => (
+          <button key={t.key} onClick={() => setTab(t.key)}
+            className={`px-4 py-2 text-xs font-medium border-b-2 -mb-px transition-colors ${tab === t.key ? "border-foreground text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "production" && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <KPICard label="Total Created" value={322} sub="Feb–Jul 2026" icon={Package} accent="bg-muted text-muted-foreground" />
+            <KPICard label="Completed" value={273} sub="84.8% completion" icon={CheckCircle} accent="bg-muted text-muted-foreground" trend="up" />
+            <KPICard label="QC Pass Rate" value="89%" sub="Of inspected" icon={ShieldCheck} accent="bg-muted text-muted-foreground" />
+            <KPICard label="Back Job Rate" value="5%" sub="Of completed" icon={RotateCcw} accent="bg-muted text-muted-foreground" />
+          </div>
+          <div className="bg-card border border-border rounded-lg p-4">
+            <div className="text-xs font-semibold uppercase tracking-widest text-foreground mb-4">Monthly Production</div>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={prodReportData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
+                <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#737373" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: "#737373" }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={{ background: "#f5f5f5", border: "1px solid rgba(0,0,0,0.12)", borderRadius: 6, fontSize: 11 }} />
+                <Legend wrapperStyle={{ fontSize: 10, color: "#737373" }} />
+                <Bar key="prod-created" dataKey="created" fill="#0a0a0a" radius={[2,2,0,0]} name="Created" />
+                <Bar key="prod-completed" dataKey="completed" fill="#737373" radius={[2,2,0,0]} name="Completed" />
+                <Bar key="prod-approved" dataKey="approved" fill="#a3a3a3" radius={[2,2,0,0]} name="Approved" />
+                <Bar key="prod-backjobs" dataKey="backjobs" fill="#d4d4d4" radius={[2,2,0,0]} name="Back Jobs" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="bg-card border border-border rounded-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    {["Month", "Created", "Completed", "QC Approved", "Back Jobs", "Efficiency %"].map(h => (
+                      <th key={h} className="text-left px-4 py-3 text-muted-foreground font-medium uppercase tracking-wider text-[10px]">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/50">
+                  {prodReportData.map(r => (
+                    <tr key={r.month} className="hover:bg-black/[0.02] transition-colors">
+                      <td className="px-4 py-3 font-medium text-foreground">{r.month} 2026</td>
+                      <td className="px-4 py-3 font-mono text-foreground">{r.created}</td>
+                      <td className="px-4 py-3 font-mono text-foreground">{r.completed}</td>
+                      <td className="px-4 py-3 font-mono text-foreground">{r.approved}</td>
+                      <td className="px-4 py-3 font-mono text-foreground">{r.backjobs}</td>
+                      <td className="px-4 py-3 font-mono text-foreground font-semibold">{Math.round((r.completed / r.created) * 100)}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tab === "quality" && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <KPICard label="QC Pass Rate" value="89%" sub="Of all inspected" icon={ShieldCheck} accent="bg-muted text-muted-foreground" trend="up" />
+            <KPICard label="Rejection Rate" value="4%" sub="Failed QC" icon={XCircle} accent="bg-muted text-muted-foreground" />
+            <KPICard label="Back Job Rate" value="5%" sub="Sent for rework" icon={RotateCcw} accent="bg-muted text-muted-foreground" />
+            <KPICard label="Avg Inspect Time" value="18m" sub="Per bundle" icon={Clock} accent="bg-muted text-muted-foreground" />
+          </div>
+          <div className="bg-card border border-border rounded-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    {["Design", "Inspected", "Approved", "Rejected", "Back Job", "Pass Rate"].map(h => (
+                      <th key={h} className="text-left px-4 py-3 text-muted-foreground font-medium uppercase tracking-wider text-[10px]">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/50">
+                  {prodQualityData.map(r => (
+                    <tr key={r.design} className="hover:bg-black/[0.02] transition-colors">
+                      <td className="px-4 py-3 font-medium text-foreground">{r.design}</td>
+                      <td className="px-4 py-3 font-mono text-foreground">{r.inspected}</td>
+                      <td className="px-4 py-3 font-mono text-foreground">{r.approved}</td>
+                      <td className="px-4 py-3 font-mono text-foreground">{r.rejected}</td>
+                      <td className="px-4 py-3 font-mono text-foreground">{r.backjob}</td>
+                      <td className="px-4 py-3 font-mono text-foreground font-semibold">{Math.round((r.approved / r.inspected) * 100)}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tab === "productivity" && (
+        <div className="bg-card border border-border rounded-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  {["Seamstress", "Bundles Completed", "Back Jobs", "Avg Time / Bundle", "Efficiency %"].map(h => (
+                    <th key={h} className="text-left px-4 py-3 text-muted-foreground font-medium uppercase tracking-wider text-[10px]">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {[
+                  { name: "Maria Santos", completed: 48, backjobs: 2, avg: "3h 20m", eff: 96 },
+                  { name: "Liza Cruz", completed: 42, backjobs: 1, avg: "3h 45m", eff: 98 },
+                  { name: "Rosa Mendez", completed: 36, backjobs: 3, avg: "4h 10m", eff: 92 },
+                  { name: "Cita Bautista", completed: 31, backjobs: 2, avg: "4h 30m", eff: 94 },
+                  { name: "Ana Torres", completed: 18, backjobs: 4, avg: "5h 00m", eff: 78 },
+                  { name: "Joy Reyes", completed: 12, backjobs: 1, avg: "4h 50m", eff: 92 },
+                ].map(s => (
+                  <tr key={s.name} className="hover:bg-black/[0.02] transition-colors">
+                    <td className="px-4 py-3 font-medium text-foreground">{s.name}</td>
+                    <td className="px-4 py-3 font-mono text-foreground">{s.completed}</td>
+                    <td className="px-4 py-3 font-mono text-foreground">{s.backjobs}</td>
+                    <td className="px-4 py-3 font-mono text-foreground">{s.avg}</td>
+                    <td className="px-4 py-3 font-mono text-foreground font-semibold">{s.eff}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
