@@ -398,8 +398,8 @@ function EAPettyCash() {
       <div className="flex gap-5 items-start">
         {/* Left panel */}
         <div className="w-64 shrink-0 bg-card border border-border rounded-lg overflow-hidden">
-          <div className="px-3 py-3 border-b border-border flex items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Requests</span>
+          <div className="px-3 py-3 border-b border-border bg-[#333] flex items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-widest text-white">Requests</span>
             <span className="text-[10px] font-mono bg-muted px-1.5 py-0.5 rounded text-muted-foreground border border-border">
               {requests.length}
             </span>

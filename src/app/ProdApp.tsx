@@ -11,7 +11,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 import { StatusBadge, KPICard, SectionHeader } from "./shared";
-// import "driver.js/dist/driver.css";
+import "driver.js/dist/driver.css";
 import { driver } from "driver.js";
 
 // ─── Production Data ─────────────────────────────────────────────────────────
@@ -649,16 +649,12 @@ export default function ProdApp({ onLogout }: { onLogout: () => void }) {
 
   useEffect(() => {
     if (!localStorage.getItem("mera_prod_tour_seen")) {
-      const timer = setTimeout(startProdTour, 500);
+      const timer = setTimeout(startFullProdTour, 600);
       return () => clearTimeout(timer);
     }
   }, []);
 
   useEffect(() => {
-    if (prodPage === "prod-overview" && !localStorage.getItem("mera_prod_tour_seen")) {
-      const timer = setTimeout(startProdTour, 400);
-      return () => clearTimeout(timer);
-    }
     if (prodPage === "prod-bundles" && !localStorage.getItem("mera_prod_bundles_tour_seen")) {
       const timer = setTimeout(startBundlesTour, 400);
       return () => clearTimeout(timer);
@@ -673,88 +669,220 @@ export default function ProdApp({ onLogout }: { onLogout: () => void }) {
     }
   }, [prodPage]);
 
-  function startProdTour() {
-    setProdPage("prod-overview");
-    setTimeout(() => {
-      const steps = [
-        {
-          element: "#prod-kpi-section",
-          popover: {
-            title: "Production Overview",
-            description: "At-a-glance KPIs — total bundles, in progress, pending QC, approved, rejected, back jobs, and completed today.",
-            side: "bottom" as const,
-          },
-        },
-        {
-          element: "#prod-quick-actions",
-          popover: {
-            title: "Quick Actions",
-            description: "Jump to create bundles, scan QR codes, assign seamstresses, view pending QC, or print bundle labels.",
-            side: "bottom" as const,
-          },
-        },
-        {
-          element: "#prod-bundle-table",
-          popover: {
-            title: "Bundle Management",
-            description: "Track all bundles with photo preview, status badges, and actions. Click View All for the full list. Use the Documents column to download bundle files.",
-            side: "top" as const,
-          },
-        },
-        {
-          element: "#prod-pending-back",
-          popover: {
-            title: "Pending QC & Back Job Queue",
-            description: "Monitor bundles waiting for QC inspection and those sent back for rework. Click a row to jump to inspection.",
-            side: "left" as const,
-          },
-        },
-        {
-          element: "#prod-timeline-inspections",
-          popover: {
-            title: "Timeline & Recent Inspections",
-            description: "View production timeline events for a bundle and see recent QC inspection results at a glance.",
-            side: "right" as const,
-          },
-        },
-      ];
-      const driverObj = driver({
-        showProgress: true,
-        animate: true,
-        overlayColor: "rgba(0,0,0,0.5)",
-        popoverClass: "mera-tour-popover",
-        onDestroyed: () => localStorage.setItem("mera_prod_tour_seen", "1"),
-        steps,
-      });
-      driverObj.drive();
-    }, 300);
+  function startFullProdTour() {
+    let phase = 0;
+
+    function runPhase() {
+      if (phase === 0) {
+        setProdPage("prod-overview");
+        setTimeout(() => {
+          const d = driver({
+            showProgress: true,
+            animate: true,
+            overlayColor: "rgba(0,0,0,0.5)",
+            popoverClass: "mera-tour-popover",
+            steps: [
+              {
+                element: "aside",
+                popover: {
+                  title: "Sidebar Navigation",
+                  description: "Use the sidebar to switch between Dashboard, Bundles, QC Inspection, and Reports. The active page is highlighted.",
+                  side: "right" as const,
+                },
+              },
+              {
+                element: "#prod-kpi-section",
+                popover: {
+                  title: "Production Overview",
+                  description: "At-a-glance KPIs — total bundles, in progress, pending QC, approved, rejected, back jobs, and completed today.",
+                  side: "bottom" as const,
+                },
+              },
+              {
+                element: "#prod-quick-actions",
+                popover: {
+                  title: "Quick Actions",
+                  description: "Jump to create bundles, scan QR codes, assign seamstresses, view pending QC, or print bundle labels.",
+                  side: "bottom" as const,
+                },
+              },
+              {
+                element: "#prod-bundle-table",
+                popover: {
+                  title: "Bundle Management",
+                  description: "Track all bundles with photo preview, status badges, and actions. Click View All for the full list.",
+                  side: "top" as const,
+                },
+              },
+              {
+                element: "#prod-pending-back",
+                popover: {
+                  title: "Pending QC & Back Job Queue",
+                  description: "Left: bundles waiting for QC inspection. Right: bundles sent back for rework. Click any Pending QC row to jump to inspection.",
+                  side: "left" as const,
+                },
+              },
+              {
+                element: "#prod-timeline-inspections",
+                popover: {
+                  title: "Timeline & Recent Inspections",
+                  description: "Left: production timeline for the current bundle. Right: recent QC inspection results at a glance.",
+                  side: "right" as const,
+                },
+              },
+              {
+                popover: {
+                  title: "Next: Bundles Page",
+                  description: "Now let's explore the Bundles page where you can create production bundles from R&D designs. Click Done to continue.",
+                },
+              },
+            ],
+            onFinish: () => {
+              phase = 1;
+              setTimeout(runPhase, 600);
+            },
+            onDestroyed: () => {
+              if (phase === 0) localStorage.setItem("mera_prod_tour_seen", "1");
+            },
+          });
+          d.drive();
+        }, 400);
+      } else if (phase === 1) {
+        setProdPage("prod-bundles");
+        setTimeout(() => {
+          const d = driver({
+            showProgress: true,
+            animate: true,
+            overlayColor: "rgba(0,0,0,0.5)",
+            popoverClass: "mera-tour-popover",
+            steps: [
+              {
+                element: "#prod-new-designs",
+                popover: {
+                  title: "Designs from R&D",
+                  description: "Approved/released designs from the R&D team appear here. Search by name or code, then click any design card to create a production bundle.",
+                  side: "top" as const,
+                },
+              },
+              {
+                popover: {
+                  title: "Create Bundle Form",
+                  description: "After clicking a design card, a modal opens. Fill in Quantity (required), Color (required), Size, Batch No., and Production Date before saving.",
+                },
+              },
+              {
+                popover: {
+                  title: "Save & Print QR",
+                  description: "Click 'Save & Print QR' to generate the bundle and automatically print its QR label. The new bundle appears instantly in the management table.",
+                },
+              },
+              {
+                popover: {
+                  title: "Next: QC Inspection",
+                  description: "Now let's explore the QC Inspection page. Click Done to continue.",
+                },
+              },
+            ],
+            onFinish: () => {
+              phase = 2;
+              setTimeout(runPhase, 600);
+            },
+            onDestroyed: () => {
+              if (phase === 1) localStorage.setItem("mera_prod_bundles_tour_seen", "1");
+            },
+          });
+          d.drive();
+        }, 400);
+      } else if (phase === 2) {
+        setProdPage("prod-qc");
+        setTimeout(() => {
+          const d = driver({
+            showProgress: true,
+            animate: true,
+            overlayColor: "rgba(0,0,0,0.5)",
+            popoverClass: "mera-tour-popover",
+            steps: [
+              {
+                element: "#prod-scan-qr",
+                popover: {
+                  title: "QR Scan",
+                  description: "Select a bundle from the dropdown to simulate a QR scan. Bundle info — design, seamstress, completion time — appears below.",
+                  side: "bottom" as const,
+                },
+              },
+              {
+                element: "#prod-qc-pending-queue",
+                popover: {
+                  title: "Pending QC Queue",
+                  description: "Click any pending bundle to load it for inspection — no need to scan. The selected bundle highlights in the list.",
+                  side: "left" as const,
+                },
+              },
+              {
+                popover: {
+                  title: "Simulate a Scan",
+                  description: "Pick any bundle from the dropdown to load its details. This replicates scanning a physical QR code on the production floor.",
+                },
+              },
+              {
+                element: "#prod-checklist",
+                popover: {
+                  title: "Inspection Checklist",
+                  description: "Check each quality criterion — Stitch Quality, Measurement, Fabric Defects, Accessories, and Overall Appearance. Optionally upload a photo and add notes.",
+                  side: "bottom" as const,
+                },
+              },
+              {
+                element: "#prod-actions-bar",
+                popover: {
+                  title: "Decision Buttons",
+                  description: "Approve — passes QC. Reject — marks as failed. Back Job — sends bundle for rework with notes. The decision is recorded with timestamp.",
+                  side: "top" as const,
+                },
+              },
+            ],
+            onFinish: () => {
+              localStorage.setItem("mera_prod_tour_seen", "1");
+              localStorage.setItem("mera_prod_bundles_tour_seen", "1");
+              localStorage.setItem("mera_prod_qc_tour_seen", "1");
+            },
+            onDestroyed: () => {
+              if (phase === 2) {
+                localStorage.setItem("mera_prod_tour_seen", "1");
+                localStorage.setItem("mera_prod_bundles_tour_seen", "1");
+                localStorage.setItem("mera_prod_qc_tour_seen", "1");
+              }
+            },
+          });
+          d.drive();
+        }, 400);
+      }
+    }
+
+    runPhase();
   }
 
   function startBundlesTour() {
     setTimeout(() => {
       const steps = [
         {
-          element: "#prod-create-bundle-btn",
+          element: "#prod-new-designs",
           popover: {
-            title: "Create Bundle",
-            description: "Click to open the bundle creation form. Fill in design, quantity, size, color, and batch details.",
-            side: "left" as const,
-          },
-        },
-        {
-          element: "#prod-create-panel",
-          popover: {
-            title: "Bundle Fields",
-            description: "Each field is required — select the design, set quantity, choose size and color, then save.",
-            side: "bottom" as const,
-          },
-        },
-        {
-          element: "#prod-save-print-btn",
-          popover: {
-            title: "Save & Print QR / Save Only",
-            description: "Save & Print QR generates the bundle and prints its QR label. Save Only just saves the bundle for later.",
+            title: "Designs from R&D",
+            description: "Approved/released designs appear here. Search by name/code, then click a design card to create a bundle.",
             side: "top" as const,
+          },
+        },
+        {
+          popover: {
+            title: "Create Bundle Form",
+            description: "After clicking a design card, a modal opens. Fill in Quantity (required), Color (required), Size, Batch No., and Production Date.",
+          },
+        },
+        {
+          popover: {
+            title: "Save & Print QR",
+            description: "Click 'Save & Print QR' to generate the bundle and print its QR label. The new bundle appears instantly in the table below.",
           },
         },
       ];
@@ -776,9 +904,23 @@ export default function ProdApp({ onLogout }: { onLogout: () => void }) {
         {
           element: "#prod-scan-qr",
           popover: {
-            title: "Scan QR",
-            description: "Select or scan a bundle to load its details for inspection. The bundle info will appear below.",
+            title: "QR Scan",
+            description: "Select a bundle from the dropdown to simulate a QR scan. Bundle info appears below.",
             side: "bottom" as const,
+          },
+        },
+        {
+          element: "#prod-qc-pending-queue",
+          popover: {
+            title: "Pending QC Queue",
+            description: "Click any pending bundle to load it for inspection. The selected bundle highlights in the list.",
+            side: "left" as const,
+          },
+        },
+        {
+          popover: {
+            title: "Simulate a Scan",
+            description: "Pick a bundle from the dropdown to load its details — replicates scanning a physical QR code.",
           },
         },
         {
@@ -936,7 +1078,7 @@ export default function ProdApp({ onLogout }: { onLogout: () => void }) {
             <QrCode size={13} /> Scan QR
           </button>
           {/* Tour */}
-          <button onClick={startProdTour} className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Start Tour">
+          <button onClick={startFullProdTour} className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Start Tour">
             <BookOpen size={15} />
           </button>
           {/* Notifications */}
@@ -1133,8 +1275,8 @@ function ProdOverview({ navigate }: { navigate: (page: string) => void }) {
       {/* Two-col: Pending QC | Back Jobs */}
       <div id="prod-pending-back" className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-card border border-border rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Pending QC Queue</span>
+          <div className="px-4 py-3 border-b border-border bg-[#333] flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-widest text-white">Pending QC Queue</span>
             <span className="text-[10px] font-mono text-amber-500 font-medium">{prodPendingQC.length} waiting</span>
           </div>
           <div className="overflow-x-auto">
@@ -1161,8 +1303,8 @@ function ProdOverview({ navigate }: { navigate: (page: string) => void }) {
           </div>
         </div>
         <div className="bg-card border border-border rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Back Job Queue</span>
+          <div className="px-4 py-3 border-b border-border bg-[#333] flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-widest text-white">Back Job Queue</span>
             <span className="text-[10px] font-mono text-muted-foreground">{prodBackJobs.length} items</span>
           </div>
           <div className="overflow-x-auto">
@@ -1193,8 +1335,8 @@ function ProdOverview({ navigate }: { navigate: (page: string) => void }) {
       {/* Two-col: Timeline | Recent Inspections */}
       <div id="prod-timeline-inspections" className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-card border border-border rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-border">
-            <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Production Timeline</span>
+          <div className="px-4 py-3 border-b border-border bg-[#333]">
+            <span className="text-xs font-semibold uppercase tracking-widest text-white">Production Timeline</span>
             <span className="text-[10px] text-muted-foreground font-mono ml-2">BND-0012</span>
           </div>
           <div className="p-4 space-y-0">
@@ -1214,8 +1356,8 @@ function ProdOverview({ navigate }: { navigate: (page: string) => void }) {
           </div>
         </div>
         <div className="bg-card border border-border rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-border">
-            <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Recent Inspections</span>
+          <div className="px-4 py-3 border-b border-border bg-[#333]">
+            <span className="text-xs font-semibold uppercase tracking-widest text-white">Recent Inspections</span>
           </div>
           <div className="divide-y divide-border/50">
             {prodInspections.map((ins, i) => (
@@ -1342,8 +1484,8 @@ function ProdBundles() {
 
       {/* Designs */}
       <div id="prod-new-designs" className="bg-card border border-border rounded-lg overflow-hidden">
-        <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Designs</span>
+        <div className="px-4 py-3 border-b border-border bg-[#333] flex items-center justify-between">
+          <span className="text-xs font-semibold uppercase tracking-widest text-white">Designs</span>
           <span className="text-[10px] font-mono text-muted-foreground">{prodNewDesigns.length} designs</span>
         </div>
         <div className="p-3 border-b border-border">
@@ -1739,7 +1881,7 @@ function ProdQC() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Scan / Bundle Info */}
         <div className="space-y-4">
-          <div id="prod-scan-qr" className="bg-card border border-border rounded-lg p-4">
+          <div id="prod-scan-qr" className="bg-white border border-border rounded-lg p-4">
               <span className="text-xs font-semibold uppercase tracking-widest text-foreground">QR Scan</span>
               <div className="flex items-center gap-2">
                 <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Simulate Scan:</label>
@@ -1780,7 +1922,7 @@ function ProdQC() {
 
           {/* Inspection Form */}
           {scanned && !result && (
-            <div id="prod-checklist" className="bg-card border border-border rounded-lg p-4 space-y-4">
+            <div id="prod-checklist" className="bg-white border border-border rounded-lg p-4 space-y-4">
               <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Inspection Checklist</span>
               {/* Upload photo placeholder */}
               <div className="border border-dashed border-border rounded-lg h-16 flex items-center justify-center gap-2 hover:border-foreground/30 transition-colors cursor-pointer">
@@ -1846,9 +1988,9 @@ function ProdQC() {
 
         {/* Pending QC + Back Jobs */}
         <div className="space-y-4">
-          <div className="bg-card border border-border rounded-lg overflow-hidden">
-            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Pending QC Queue</span>
+          <div id="prod-qc-pending-queue" className="bg-card border border-border rounded-lg overflow-hidden">
+            <div className="px-4 py-3 border-b border-border bg-[#333] flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-widest text-white">Pending QC Queue</span>
               <span className="text-[10px] font-mono text-amber-500">{prodPendingQC.length} waiting</span>
             </div>
             <div className="divide-y divide-border/50">
@@ -1872,8 +2014,8 @@ function ProdQC() {
           </div>
 
           <div className="bg-card border border-border rounded-lg overflow-hidden">
-            <div className="px-4 py-3 border-b border-border">
-              <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Back Job Management</span>
+            <div className="px-4 py-3 border-b border-border bg-[#333]">
+              <span className="text-xs font-semibold uppercase tracking-widest text-white">Back Job Management</span>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
@@ -1945,7 +2087,7 @@ function ProdReports() {
             <KPICard label="QC Pass Rate" value="89%" sub="Of inspected" icon={ShieldCheck} accent="bg-muted text-muted-foreground" />
             <KPICard label="Back Job Rate" value="5%" sub="Of completed" icon={RotateCcw} accent="bg-muted text-muted-foreground" />
           </div>
-          <div className="bg-card border border-border rounded-lg p-4">
+          <div className="bg-white border border-border rounded-lg p-4">
             <div className="text-xs font-semibold uppercase tracking-widest text-foreground mb-4">Monthly Production</div>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={prodReportData}>

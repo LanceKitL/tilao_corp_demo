@@ -21,6 +21,7 @@ import {
 import RDApp from "./RDApp";
 import ProdApp from "./ProdApp";
 import EAApp from "./EAApp";
+import ExecApp from "./ExecApp";
 import LoginView from "./LoginView";
 
 // ─── Data ───────────────────────────────────────────────────────────────────
@@ -191,8 +192,8 @@ function DashboardView() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {/* Recent Activities */}
         <div className="lg:col-span-3 bg-card border border-border rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Recent Activities</span>
+          <div className="px-4 py-3 border-b border-border bg-[#333] flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-widest text-white">Recent Activities</span>
             <span className="text-[10px] text-muted-foreground font-mono">Live</span>
           </div>
           <div className="divide-y divide-border">
@@ -214,8 +215,8 @@ function DashboardView() {
 
         {/* System Health */}
         <div className="lg:col-span-2 bg-card border border-border rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-border">
-            <span className="text-xs font-semibold uppercase tracking-widest text-foreground">System Health</span>
+          <div className="px-4 py-3 border-b border-border bg-[#333]">
+            <span className="text-xs font-semibold uppercase tracking-widest text-white">System Health</span>
           </div>
           <div className="p-4 space-y-3">
             {[
@@ -251,8 +252,8 @@ function DashboardView() {
 
       {/* Pending Approvals */}
       <div className="bg-card border border-border rounded-lg overflow-hidden">
-        <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Pending Approvals</span>
+        <div className="px-4 py-3 border-b border-border bg-[#333] flex items-center justify-between">
+          <span className="text-xs font-semibold uppercase tracking-widest text-white">Pending Approvals</span>
           <button className="text-[11px] text-primary hover:text-accent transition-colors font-medium">View All</button>
         </div>
         <div className="overflow-x-auto">
@@ -291,8 +292,8 @@ function DashboardView() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Pie */}
         <div className="bg-card border border-border rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-border">
-            <span className="text-xs font-semibold uppercase tracking-widest text-foreground">User Distribution</span>
+          <div className="px-4 py-3 border-b border-border bg-[#333]">
+            <span className="text-xs font-semibold uppercase tracking-widest text-white">User Distribution</span>
           </div>
           <div className="p-4">
             <ResponsiveContainer width="100%" height={180}>
@@ -323,8 +324,8 @@ function DashboardView() {
 
         {/* Line */}
         <div className="bg-card border border-border rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-border">
-            <span className="text-xs font-semibold uppercase tracking-widest text-foreground">System Activity</span>
+          <div className="px-4 py-3 border-b border-border bg-[#333]">
+            <span className="text-xs font-semibold uppercase tracking-widest text-white">System Activity</span>
           </div>
           <div className="p-4">
             <ResponsiveContainer width="100%" height={220}>
@@ -348,8 +349,8 @@ function DashboardView() {
 
         {/* Bar */}
         <div className="bg-card border border-border rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-border">
-            <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Monthly Production</span>
+          <div className="px-4 py-3 border-b border-border bg-[#333]">
+            <span className="text-xs font-semibold uppercase tracking-widest text-white">Monthly Production</span>
           </div>
           <div className="p-4">
             <ResponsiveContainer width="100%" height={220}>
@@ -377,8 +378,8 @@ function DashboardView() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* User Management Widget */}
         <div className="bg-card border border-border rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-widest text-foreground">User Accounts</span>
+          <div className="px-4 py-3 border-b border-border bg-[#333] flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-widest text-white">User Accounts</span>
             <div className="flex gap-1">
               <button className="flex items-center gap-1 text-[11px] text-primary hover:text-accent transition-colors font-medium px-2 py-1 rounded border border-border hover:border-primary/40">
                 <UserPlus size={10} /> Add
@@ -417,8 +418,8 @@ function DashboardView() {
 
         {/* Notifications Panel */}
         <div className="bg-card border border-border rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Notifications</span>
+          <div className="px-4 py-3 border-b border-border bg-[#333] flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-widest text-white">Notifications</span>
             <span className="w-4 h-4 rounded-full bg-red-500 text-[9px] text-white flex items-center justify-center font-bold">5</span>
           </div>
           <div className="divide-y divide-border/50">
@@ -440,8 +441,8 @@ function DashboardView() {
 
         {/* Audit Log Preview */}
         <div className="bg-card border border-border rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Audit Log</span>
+          <div className="px-4 py-3 border-b border-border bg-[#333] flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-widest text-white">Audit Log</span>
             <button className="text-[11px] text-primary hover:text-accent transition-colors font-medium">Full Log</button>
           </div>
           <div className="divide-y divide-border/50">
@@ -1136,8 +1137,8 @@ function ProductionReportsView() {
         <KPICard label="QC Pass Rate" value="89%" sub="Avg over period" icon={ShieldCheck} accent="bg-muted text-muted-foreground" trend="up" />
         <KPICard label="Back Job Rate" value="11%" sub="Avg over period" icon={RotateCcw} accent="bg-muted text-muted-foreground" />
       </div>
-      <div className="bg-card border border-border rounded-lg overflow-hidden p-4">
-        <div className="text-xs font-semibold uppercase tracking-widest text-foreground mb-4">Monthly Production Activity</div>
+      <div className="bg-black border border-border rounded-lg overflow-hidden p-4">
+        <div className="text-xs font-semibold uppercase tracking-widest text-white mb-4">Monthly Production Activity</div>
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={productionData}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
@@ -1204,8 +1205,8 @@ function FinancialReportsView() {
         <KPICard label="Avg Request" value="₱687" sub="Per transaction" icon={TrendingUp} accent="bg-muted text-muted-foreground" />
         <KPICard label="Largest Disbursement" value="₱1,200" sub="Pantry restock" icon={Activity} accent="bg-muted text-muted-foreground" />
       </div>
-      <div className="bg-card border border-border rounded-lg overflow-hidden p-4">
-        <div className="text-xs font-semibold uppercase tracking-widest text-foreground mb-4">Monthly Petty Cash Spend (₱)</div>
+      <div className="bg-black border border-border rounded-lg overflow-hidden p-4">
+        <div className="text-xs font-semibold uppercase tracking-widest text-white mb-4">Monthly Petty Cash Spend (₱)</div>
         <ResponsiveContainer width="100%" height={200}>
           <LineChart data={finData}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
@@ -1268,8 +1269,8 @@ function AuditReportsView() {
         <KPICard label="System Events" value={86} sub="Automated" icon={Server} accent="bg-muted text-muted-foreground" />
         <KPICard label="Failed Logins" value={7} sub="Security alerts" icon={AlertCircle} accent="bg-muted text-muted-foreground" />
       </div>
-      <div className="bg-card border border-border rounded-lg overflow-hidden p-4">
-        <div className="text-xs font-semibold uppercase tracking-widest text-foreground mb-4">Events by Module</div>
+      <div className="bg-black border border-border rounded-lg overflow-hidden p-4">
+        <div className="text-xs font-semibold uppercase tracking-widest text-white mb-4">Events by Module</div>
         <ResponsiveContainer width="100%" height={200}>
           <BarChart data={auditEventsData} layout="vertical">
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
@@ -1623,8 +1624,8 @@ function BackupView() {
         <KPICard label="Retention" value="30 days" sub="Auto-purge policy" icon={Archive} accent="bg-muted text-muted-foreground" />
       </div>
       <div className="bg-card border border-border rounded-lg overflow-hidden">
-        <div className="px-4 py-3 border-b border-border">
-          <span className="text-xs font-semibold uppercase tracking-widest text-foreground">System Services</span>
+        <div className="px-4 py-3 border-b border-border bg-[#333]">
+          <span className="text-xs font-semibold uppercase tracking-widest text-white">System Services</span>
         </div>
         <div className="p-4 grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
@@ -1644,8 +1645,8 @@ function BackupView() {
         </div>
       </div>
       <div className="bg-card border border-border rounded-lg overflow-hidden">
-        <div className="px-4 py-3 border-b border-border">
-          <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Backup History</span>
+        <div className="px-4 py-3 border-b border-border bg-[#333]">
+          <span className="text-xs font-semibold uppercase tracking-widest text-white">Backup History</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
@@ -1753,7 +1754,7 @@ export default function App() {
   if (!userRole) return <LoginView onLogin={(role) => setUserRole(role)} />;
   if (userRole === "rd") return <RDApp onLogout={() => setUserRole(null)} />;
   if (userRole === "prod") return <ProdApp onLogout={() => setUserRole(null)} />;
-  if (userRole === "exec") return <EAApp onLogout={() => setUserRole(null)} />;
+  if (userRole === "exec") return <ExecApp onLogout={() => setUserRole(null)} />;
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-background" style={{ fontFamily: "var(--font-display)" }}>

@@ -539,8 +539,8 @@ function RDOverview({ navigate }: { navigate: (page: string) => void }) {
       {/* Two-column: Recent Drafts | Recent Released */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div id="rd-recent-drafts" className="bg-card border border-border rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-border">
-            <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Recent Drafts</span>
+          <div className="px-4 py-3 border-b border-border bg-[#333]">
+            <span className="text-xs font-semibold uppercase tracking-widest text-white">Recent Drafts</span>
           </div>
           <div className="divide-y divide-border/50">
             {rdDesigns.filter(d => d.status === "Draft").slice(0, 3).concat(rdDesigns.filter(d => d.status !== "Draft").slice(0, 2)).slice(0, 3).map(d => (
@@ -555,8 +555,8 @@ function RDOverview({ navigate }: { navigate: (page: string) => void }) {
           </div>
         </div>
         <div id="rd-recent-released" className="bg-card border border-border rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-border">
-            <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Recent Released</span>
+          <div className="px-4 py-3 border-b border-border bg-[#333]">
+            <span className="text-xs font-semibold uppercase tracking-widest text-white">Recent Released</span>
           </div>
           <div className="divide-y divide-border/50">
             {rdDesigns.filter(d => d.status === "Released").slice(0, 3).map(d => (
@@ -574,8 +574,8 @@ function RDOverview({ navigate }: { navigate: (page: string) => void }) {
 
       {/* Recent Activity */}
       <div id="rd-recent-activity" className="bg-card border border-border rounded-lg overflow-hidden">
-        <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Recent Activity</span>
+        <div className="px-4 py-3 border-b border-border bg-[#333] flex items-center justify-between">
+          <span className="text-xs font-semibold uppercase tracking-widest text-white">Recent Activity</span>
           <span className="text-[10px] text-muted-foreground font-mono">Live</span>
         </div>
         <div className="divide-y divide-border/50">
@@ -974,8 +974,8 @@ function RDNewDesign() {
       {activeTab === "bom" && (
         <div className="space-y-4">
           <div className="bg-card border border-border rounded-lg overflow-hidden">
-            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Bill of Materials</span>
+            <div className="px-4 py-3 border-b border-border bg-[#333] flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-widest text-white">Bill of Materials</span>
               <button onClick={() => setBomRows(r => [...r, { material: "", supplier: "", qty: "", unit: "", id: Date.now() }])}
                 className="flex items-center gap-1.5 text-[11px] text-foreground border border-border rounded px-3 py-1.5 hover:bg-muted transition-colors">
                 <Plus size={11} /> Add Row
@@ -1058,8 +1058,8 @@ function RDNewDesign() {
       {activeTab === "versions" && (
         <div className="space-y-4">
           <div className="bg-card border border-border rounded-lg overflow-hidden">
-            <div className="px-4 py-3 border-b border-border">
-              <span className="text-xs font-semibold uppercase tracking-widest text-foreground">Version History — D-103</span>
+            <div className="px-4 py-3 border-b border-border bg-[#333]">
+              <span className="text-xs font-semibold uppercase tracking-widest text-white">Version History — D-103</span>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
@@ -1546,8 +1546,8 @@ function RDReports() {
 
       {tab === "cost" && (
         <div className="space-y-4">
-          <div className="bg-card border border-border rounded-lg p-4">
-            <div className="text-xs font-semibold uppercase tracking-widest text-foreground mb-4">Estimated Cost by Category (₱)</div>
+          <div className="bg-black border border-border rounded-lg p-4">
+            <div className="text-xs font-semibold uppercase tracking-widest text-white mb-4">Estimated Cost by Category (₱)</div>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={rdCostData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
